@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Bakery & Ice Cream Match</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Google Fonts: Fredoka & Prompt -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Prompt:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    * {
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Prompt', 'Fredoka', sans-serif;
+      /* Pastel Pink Smooth Gradient matching reference theme */
+      background: linear-gradient(180deg, #F9C5D1 0%, #F8B4C4 50%, #F5A5B8 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+      position: relative;
+    }
+
+    /* Ambient floating sparkle particles background */
+    .sparkle-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: 
+        radial-gradient(2px 2px at 20px 30px, #ffffff 100%, transparent),
+        radial-gradient(3px 3px at 80px 120px, rgba(255, 255, 255, 0.8) 100%, transparent),
+        radial-gradient(2px 2px at 150px 70px, #ffffff 100%, transparent),
+        radial-gradient(3px 3px at 240px 180px, rgba(255, 255, 255, 0.6) 100%, transparent),
+        radial-gradient(2px 2px at 310px 90px, #ffffff 100%, transparent),
+        radial-gradient(3px 3px at 380px 240px, rgba(255, 255, 255, 0.9) 100%, transparent);
+      background-repeat: repeat;
+      background-size: 400px 300px;
+      opacity: 0.6;
+    }
+
+    .font-sweet {
+      font-family: 'Fredoka', 'Prompt', sans-serif;
+    }
+
+    /* Top HUD Cards */
+    .hud-pill {
+      background: #FFFFFF;
+      border-radius: 20px;
+      padding: 6px 14px;
+      box-shadow: 0 4px 12px rgba(225, 112, 137, 0.18);
+      border: 2px solid #FCE4EC;
+    }
+
+    /* Board Frame */
+    .board-container-outer {
+      background: rgba(255, 255, 255, 0.45);
+      backdrop-filter: blur(8px);
+      border-radius: 28px;
+      border: 4px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 12px 32px rgba(214, 82, 110, 0.25);
+    }
+
+    /* Tile Slot Styling */
+    .tile-slot {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      overflow: hidden;
+      background: #F8B3C3;
+      border-radius: 12px;
+      border: 1.5px solid rgba(255, 255, 255, 0.5);
+      transition: background 0.2s;
+    }
+
+    .tile-slot:nth-child(even) {
+      background: #F7ABC1;
+    }
+
+    .dessert-item {
+      position: relative;
+      width: 90%;
+      height: 90%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      transition: transform 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .dessert-item svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 3px 6px rgba(180, 60, 80, 0.32));
+    }
+
+    /* Selection Highlight Animation */
+    .tile-selected {
+      background: #F472B6 !important;
+      border-color: #FFFFFF !important;
+    }
+
+    .tile-selected .dessert-item {
+      transform: scale(1.18);
+      filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.95));
+      animation: pulse-select 0.6s infinite alternate ease-in-out;
+    }
+
+    @keyframes pulse-select {
+      0% { transform: scale(1.12); }
+      100% { transform: scale(1.24); }
+    }
+
+    /* Pop Burst Animation */
+    .tile-pop {
+      animation: pop-anim 0.22s forwards ease-in;
+    }
+
+    @keyframes pop-anim {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35) rotate(10deg); opacity: 0.8; }
+      100% { transform: scale(0); opacity: 0; }
+    }
+
+    /* Special Rainbow Item Animation */
+    .special-star {
+      animation: star-rotate 2.5s infinite linear;
+    }
+
+    @keyframes star-rotate {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.1); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+
+    /* Floating Score & Combo Banners */
+    .score-float {
+      position: absolute;
+      font-family: 'Fredoka', 'Prompt', sans-serif;
+      font-weight: 700;
+      color: #D81B60;
+      pointer-events: none;
+      animation: float-up 0.8s forwards ease-out;
+      z-index: 60;
+      text-shadow: 0 2px 4px rgba(255, 255, 255, 0.95);
+    }
+
+    @keyframes float-up {
+      0% { opacity: 1; transform: translateY(0) scale(0.8); }
+      50% { transform: translateY(-18px) scale(1.2); }
+      100% { opacity: 0; transform: translateY(-36px) scale(0.9); }
+    }
+
+    .combo-banner {
+      position: absolute;
+      pointer-events: none;
+      font-family: 'Fredoka', 'Prompt', sans-serif;
+      font-weight: 700;
+      color: #C2185B;
+      background: #FFFFFF;
+      padding: 0.4rem 1.4rem;
+      border-radius: 9999px;
+      border: 3px solid #F06292;
+      box-shadow: 0 8px 24px rgba(194, 24, 91, 0.3);
+      animation: combo-bounce 0.9s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 70;
+    }
+
+    @keyframes combo-bounce {
+      0% { opacity: 0; transform: scale(0.3) rotate(-6deg); }
+      30% { opacity: 1; transform: scale(1.15) rotate(2deg); }
+      70% { opacity: 1; transform: scale(1) rotate(-1deg); }
+      100% { opacity: 0; transform: scale(0.8) translateY(-25px); }
+    }
+
+    /* Burst Particles */
+    .particle {
+      position: absolute;
+      pointer-events: none;
+      border-radius: 50%;
+      animation: particle-burst 0.5s ease-out forwards;
+      z-index: 50;
+    }
+
+    @keyframes particle-burst {
+      0% { opacity: 1; transform: translate(0, 0) scale(1); }
+      100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.2); }
+    }
+
+    /* Grid Layout */
+    #game-board {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      gap: 3px;
+      touch-action: none;
+    }
+
+    /* Action Buttons (Cyan & Soft Pink gradient) */
+    .btn-circle-cyan {
+      background: linear-gradient(135deg, #70E0F6 0%, #38BDF8 100%);
+      color: #FFFFFF;
+      box-shadow: 0 4px 10px rgba(56, 189, 248, 0.35);
+      border: 2px solid #FFFFFF;
+    }
+
+    .btn-circle-pink {
+      background: linear-gradient(135deg, #FF8DA1 0%, #F43F5E 100%);
+      color: #FFFFFF;
+      box-shadow: 0 4px 10px rgba(244, 63, 94, 0.35);
+      border: 2px solid #FFFFFF;
+    }
+
+    .progress-bar-fill {
+      background: linear-gradient(90deg, #70E0F6 0%, #38BDF8 50%, #4ADE80 100%);
+    }
+  </style>
+</head>
+
+<body class="flex flex-col items-center justify-between min-h-screen p-3 relative select-none">
+  
+  <div class="sparkle-bg"></div>
+
+  <div class="relative z-10 w-full max-w-lg flex flex-col items-center h-full justify-between gap-3">
+    
+    <!-- Top Header Navigation Bar -->
+    <div class="w-full flex items-center justify-between gap-2 mt-1">
+      
+      <!-- Score Display -->
+      <div class="hud-pill flex flex-col items-center min-w-[85px]">
+        <span class="text-[10px] font-bold text-pink-700/70 uppercase tracking-wider">Score</span>
+        <span id="score-val" class="font-sweet text-lg font-bold text-pink-800 leading-none mt-0.5">0</span>
+      </div>
+
+      <!-- Moves Left Display -->
+      <div class="hud-pill flex flex-col items-center min-w-[75px]">
+        <span class="text-[10px] font-bold text-pink-700/70 uppercase tracking-wider">Moves</span>
+        <span id="moves-val" class="font-sweet text-lg font-bold text-pink-800 leading-none mt-0.5">20</span>
+      </div>
+
+      <!-- Target Progress Card -->
+      <div class="hud-pill flex-1 flex flex-col justify-center px-3">
+        <div class="flex justify-between items-center text-[10px] font-bold text-pink-700/80 mb-1">
+          <span>Target</span>
+          <span id="target-text">0 / 1200</span>
+        </div>
+        <div class="w-full bg-pink-100 h-3 rounded-full overflow-hidden border border-pink-200">
+          <div id="target-bar" class="progress-bar-fill h-full w-0 transition-all duration-300"></div>
+        </div>
+      </div>
+
+      <!-- Settings Button -->
+      <button onclick="GameApp.openSettings()" class="w-10 h-10 rounded-full btn-circle-cyan flex items-center justify-center transition active:scale-95" title="Settings">
+        <i class="fa-solid fa-gear text-lg"></i>
+      </button>
+
+    </div>
+
+    <!-- Main Game Board Container -->
+    <div class="w-full aspect-square board-container-outer p-2 sm:p-3 relative flex items-center justify-center">
+      <div id="game-board" class="w-full h-full relative"></div>
+
+      <!-- Shuffling Overlay -->
+      <div id="board-overlay" class="absolute inset-0 bg-pink-900/60 backdrop-blur-md rounded-2xl hidden flex flex-col items-center justify-center z-40 p-4 text-center">
+        <div class="w-14 h-14 rounded-full bg-pink-100 flex items-center justify-center text-pink-500 text-3xl mb-2 animate-bounce">
+          🍨
+        </div>
+        <span id="overlay-text" class="font-sweet text-white font-bold text-lg mb-1">สลับตำแหน่งกระดาน...</span>
+      </div>
+    </div>
+
+    <!-- Bottom Action Controls Bar -->
+    <div class="w-full flex items-center justify-between gap-2 mb-2">
+      <div class="flex items-center gap-2">
+        <button onclick="GameApp.openMenu()" class="w-11 h-11 rounded-full btn-circle-pink flex items-center justify-center active:scale-95 transition" title="Menu">
+          <i class="fa-solid fa-bars text-lg"></i>
+        </button>
+        <button onclick="GameApp.restartGame()" class="w-11 h-11 rounded-full btn-circle-pink flex items-center justify-center active:scale-95 transition" title="Restart">
+          <i class="fa-solid fa-rotate-right text-lg"></i>
+        </button>
+        <button onclick="GameApp.useBooster()" class="w-11 h-11 rounded-full btn-circle-pink flex items-center justify-center active:scale-95 transition relative" title="Magic Booster">
+          <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+          <span id="booster-count" class="absolute -top-1 -right-1 bg-amber-400 text-pink-950 font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">2</span>
+        </button>
+      </div>
+
+      <!-- Target Progress Summary Indicator at Bottom -->
+      <div class="flex-1 hud-pill py-2 px-3 flex items-center gap-2">
+        <span class="text-xs font-bold text-pink-800">Target:</span>
+        <div class="flex-1 bg-pink-100 h-2.5 rounded-full overflow-hidden border border-pink-200">
+          <div id="bottom-target-bar" class="progress-bar-fill h-full w-0 transition-all duration-300"></div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="GameApp.openSettings()" class="w-11 h-11 rounded-full btn-circle-cyan flex items-center justify-center active:scale-95 transition" title="Settings">
+          <i class="fa-solid fa-gear text-lg"></i>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Settings & Pause Modal -->
+  <div id="settings-modal" class="fixed inset-0 bg-pink-950/40 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white/95 rounded-3xl p-6 w-full max-w-xs text-center shadow-2xl border-4 border-pink-200">
+      <h2 class="font-sweet text-2xl text-pink-600 font-bold mb-4">ตั้งค่า (Settings)</h2>
+      
+      <div class="space-y-3 mb-6">
+        <button onclick="GameApp.toggleSound()" class="w-full py-3 rounded-2xl bg-pink-50 border border-pink-200 font-bold text-pink-800 flex items-center justify-between px-4">
+          <span>เสียงเอฟเฟกต์</span>
+          <i id="sound-icon" class="fa-solid fa-volume-high text-pink-500 text-lg"></i>
+        </button>
+        <button onclick="GameApp.restartGame()" class="w-full py-3 rounded-2xl bg-pink-50 border border-pink-200 font-bold text-pink-800 flex items-center justify-between px-4">
+          <span>เริ่มเกมใหม่</span>
+          <i class="fa-solid fa-rotate-right text-pink-500 text-lg"></i>
+        </button>
+      </div>
+
+      <button onclick="GameApp.closeSettings()" class="w-full py-3 rounded-2xl btn-circle-cyan font-sweet font-bold text-base active:scale-95 transition">
+        เล่นต่อ (Resume)
+      </button>
+    </div>
+  </div>
+
+  <!-- Level Complete / Win/Lose Modal -->
+  <div id="game-modal" class="fixed inset-0 bg-pink-950/40 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white/95 rounded-3xl p-6 w-full max-w-xs text-center shadow-2xl border-4 border-pink-200">
+      <div id="modal-icon" class="w-20 h-20 mx-auto mb-2 rounded-full bg-pink-100 flex items-center justify-center text-4xl">
+        🍨
+      </div>
+      <h2 id="modal-title" class="font-sweet text-2xl text-pink-600 font-bold mb-1">ผ่านด่านแล้ว!</h2>
+      <p id="modal-desc" class="text-xs text-pink-800 font-semibold mb-4">เก่งมาก! คุณทำคะแนนถึงเป้าหมายเบเกอรี่แสนอร่อยแล้ว</p>
+      
+      <div class="bg-pink-50 rounded-2xl p-3 mb-5 border border-pink-200 flex flex-col gap-2">
+        <div class="flex justify-between text-xs font-bold text-pink-900">
+          <span>Score</span>
+          <span id="modal-score" class="text-pink-600 font-sweet text-sm">0</span>
+        </div>
+        <div class="flex justify-between text-xs font-bold text-pink-900">
+          <span>Target</span>
+          <span id="modal-target" class="text-pink-600 font-sweet text-sm">1200</span>
+        </div>
+      </div>
+
+      <button id="modal-btn" onclick="GameApp.nextLevelOrRetry()" class="w-full py-3.5 rounded-2xl btn-circle-pink font-sweet font-bold text-base active:scale-95 transition">
+        ด่านต่อไป 🚀
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const AudioEngine = {
+      ctx: null,
+      enabled: true,
+
+      init() {
+        if (!this.ctx) {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      },
+
+      play(type, combo = 1) {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        if (type === 'swap') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(360, now);
+          osc.frequency.exponentialRampToValueAtTime(620, now + 0.08);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'pop') {
+          osc.type = 'triangle';
+          const freq = 500 + Math.min(combo * 100, 600);
+          osc.frequency.setValueAtTime(freq, now);
+          osc.frequency.exponentialRampToValueAtTime(freq * 1.3, now + 0.1);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+          osc.start(now);
+          osc.stop(now + 0.1);
+        } else if (type === 'win') {
+          [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+            const o = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            o.connect(g);
+            g.connect(this.ctx.destination);
+            o.frequency.setValueAtTime(freq, now + idx * 0.09);
+            g.gain.setValueAtTime(0.18, now + idx * 0.09);
+            g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.09 + 0.2);
+            o.start(now + idx * 0.09);
+            o.stop(now + idx * 0.09 + 0.2);
+          });
+        } else if (type === 'lose') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(300, now);
+          osc.frequency.linearRampToValueAtTime(120, now + 0.35);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+          osc.start(now);
+          osc.stop(now + 0.35);
+        }
+      }
+    };
+
+    const BOARD_SIZE = 8;
+
+    const DESSERT_ITEMS = [
+      {
+        id: 'strawberry_cake',
+        svg: `<svg viewBox="0 0 64 64" fill="none">
+          <path d="M10 42 L54 42 L46 22 L18 22 Z" fill="#FDE047"/>
+          <path d="M10 42 L54 42 L50 50 L14 50 Z" fill="#F59E0B"/>
+          <path d="M10 34 L54 34 L52 40 L12 40 Z" fill="#FFFFFF"/>
+          <path d="M18 22 C24 16 40 16 46 22 L54 42 C54 42 38 44 32 39 C26 44 10 42 10 42 Z" fill="#FFF1F2"/>
+          <circle cx="32" cy="18" r="6.5" fill="#E11D48"/>
+          <path d="M30 13 C31 10 33 9 35 8" stroke="#15803D" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="30" cy="16" r="1.5" fill="#FFFFFF" opacity="0.8"/>
+        </svg>`
+      },
+      {
+        id: 'pink_donut',
+        svg: `<svg viewBox="0 0 64 64" fill="none">
+          <ellipse cx="32" cy="35" rx="22" ry="18" fill="#D97706"/>
+          <ellipse cx="32" cy="31" rx="21" ry="17" fill="#F472B6"/>
+          <ellipse cx="32" cy="33" rx="8" ry="6" fill="#F8B3C3"/>
+          <circle cx="21" cy="23" r="1.5" fill="#FACC15"/>
+          <circle cx="41" cy="25" r="1.5" fill="#60A5FA"/>
+          <circle cx="31" cy="19" r="1.5" fill="#4ADE80"/>
+          <circle cx="37" cy="39" r="1.5" fill="#FFFFFF"/>
+          <circle cx="23" cy="37" r="1.5" fill="#A855F7"/>
+        </svg>`
+      },
+      {
+        id: 'chocolate_donut',
+        svg: `<svg viewBox="0 0 64 64" fill="none">
+          <ellipse cx="32" cy="35" rx="22" ry="18" fill="#B45309"/>
+          <ellipse cx="32" cy="31" rx="21" ry="17" fill="#451A03"/>
+          <ellipse cx="32" cy="33" rx="8" ry="6" fill="#F8B3C3"/>
+          <path d="M19 25 Q23 21 28 26 T37 23 T45 27" stroke="#78350F" stroke-width="2" fill="none"/>
+          <circle cx="23" cy="23" r="1.3" fill="#38BDF8"/>
+          <circle cx="39" cy="22" r="1.3" fill="#FACC15"/>
+          <circle cx="29" cy="19" r="1.3" fill="#4ADE80"/>
+        </svg>`
+      },
+      {
+        id: 'croissant',
+        svg: `<svg viewBox="0 0 64 64" fill="none">
+          <path d="M10 36 C10 22 23 15 32 15 C41 15 54 22 54 36 C54 44 45 49 32 49 C19 49 10 44 10 36 Z" fill="#D97706"/>
+          <path d="M15 36 C15 25 23 19 32 19 C41 19 49 25 49 36 Z" fill="#F59E0B"/>
+          <path d="M21 36 C21 28 26 23 32 23 C38 23 43 28 43 36 Z" fill="#FBBF24"/>
+          <path d="M27 36 C27 31 29 27 32 27 C35 27 37 31 37 36 Z" fill="#FEF08A"/>
+        </svg>`
+      },
+      {
+        /* Distinct Ribbed Light-Blue Wrapper Cupcake */
+        id: 'cupcake',
+        svg: `<svg viewBox="0 0 64 64" fill="none">
+          <!-- Light Blue Ribbed Cup Wrapper -->
+          <path d="M17 35 L22 56 C22.5 58 24 59 26 59 L38 59 C40 59 41.5 58 42 56 L47 35 Z" fill="#38BDF8"/>
+          <path d="M21 35 L24 59 M27 35 L28.5 59 M32 35 L32 59 M37 35 L35.5 59 M43 35 L40 59" stroke="#BAE6FD" stroke-width="1.5"/>
+          <!-- Fluffy Strawberry Frosting Swirl -->
+          <path d="M32 10 C25 10 21 16 24 22 C19 21 14 25 16 31 C12 33 13 39 19 39 L45 39 C51 39 52 33 48 31 C50 25 45 21 40 22 C43 16 39 10 32 10 Z" fill="#F472B6"/>
+          <circle cx="32" cy="10" r="4" fill="#E11D48"/>
+          <circle cx="30.5" cy="8.5" r="1" fill="#FFFFFF"/>
+          <circle cx="26" cy="26" r="1" fill="#FACC15"/>
+          <circle cx="38" cy="24" r="1" fill="#FFFFFF"/>
+          <circle cx="32" cy="30" r="1" fill="#4ADE80"/>
+        </svg>`
+      },
+      {
+        /* Distinct Pearl White Stem Glass Ice Cream Sundae */
+        id: 'icecream_sundae',
+        svg: `<svg viewBox="0 0 64 64" fill="none">
+          <!-- Glossy Pearl White Ceramic Sundae Cup Base & Stem -->
+          <ellipse cx="32" cy="60" rx="12" ry="3" fill="#E2E8F0"/>
+          <path d="M30 52 L30 59 L34 59 L34 52 Z" fill="#F8FAFC"/>
+          <path d="M18 29 L24 52 C26 55 38 55 40 52 L46 29 Z" fill="#FFFFFF"/>
+          <path d="M18 29 C18 34 46 34 46 29 Z" fill="#F1F5F9"/>
+          <!-- Dual Ice Cream Scoops -->
+          <path d="M23 29 C18 29 16 22 22 17 C20 12 28 8 32 12 C36 8 44 12 42 17 C48 22 46 29 41 29 Z" fill="#FFF1F2"/>
+          <path d="M22 25 C18 25 16 20 22 16 C26 16 30 20 30 25 Z" fill="#F472B6"/>
+          <path d="M32 25 C30 20 38 16 42 20 C46 20 44 25 40 25 Z" fill="#B45309"/>
+          <!-- Wafer Stick -->
+          <rect x="39" y="8" width="4" height="24" rx="2" transform="rotate(18 39 8)" fill="#D97706"/>
+          <path d="M41 10 L43 12 M42 15 L44 17 M43 20 L45 22" stroke="#FEF08A" stroke-width="1.2"/>
+          <!-- Whipped Cream Swirl & Cherry -->
+          <circle cx="32" cy="7" r="4.5" fill="#881337"/>
+          <circle cx="30.5" cy="5.5" r="1" fill="#FFFFFF"/>
+          <path d="M32 3 C34 1 37 2 39 4" stroke="#451A03" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>`
+      }
+    ];
+
+    const GameApp = {
+      board: [],
+      selectedTile: null,
+      isProcessing: false,
+      score: 0,
+      level: 1,
+      movesLeft: 20,
+      targetScore: 1200,
+      boostersLeft: 2,
+      comboMultiplier: 1,
+
+      touchStartX: 0,
+      touchStartY: 0,
+      touchTile: null,
+
+      init() {
+        this.score = 0;
+        this.movesLeft = 20;
+        this.targetScore = 1200;
+        this.boostersLeft = 2;
+        this.comboMultiplier = 1;
+
+        this.updateUI();
+
+        do {
+          this.generateBoard();
+        } while (this.checkMatches().hasMatches || !this.hasValidMoves());
+
+        this.renderBoard();
+      },
+
+      generateBoard() {
+        this.board = [];
+        for (let r = 0; r < BOARD_SIZE; r++) {
+          this.board[r] = [];
+          for (let c = 0; c < BOARD_SIZE; c++) {
+            this.board[r][c] = this.getRandomDessert();
+          }
+        }
+      },
+
+      getRandomDessert() {
+        const item = DESSERT_ITEMS[Math.floor(Math.random() * DESSERT_ITEMS.length)];
+        return {
+          id: item.id,
+          svg: item.svg,
+          special: null
+        };
+      },
+
+      renderBoard() {
+        const boardElem = document.getElementById('game-board');
+        boardElem.innerHTML = '';
+
+        for (let r = 0; r < BOARD_SIZE; r++) {
+          for (let c = 0; c < BOARD_SIZE; c++) {
+            const slot = document.createElement('div');
+            slot.className = 'tile-slot';
+            slot.dataset.row = r;
+            slot.dataset.col = c;
+
+            const item = this.board[r][c];
+            if (item) {
+              const itemElem = document.createElement('div');
+              let specialClass = item.special === 'star' ? 'special-star' : '';
+              itemElem.className = `dessert-item ${specialClass}`;
+
+              if (this.selectedTile && this.selectedTile.r === r && this.selectedTile.c === c) {
+                slot.classList.add('tile-selected');
+              }
+
+              itemElem.innerHTML = item.svg;
+              slot.appendChild(itemElem);
+            }
+
+            slot.addEventListener('click', () => this.handleTileClick(r, c));
+            slot.addEventListener('touchstart', (e) => this.handleTouchStart(e, r, c), { passive: true });
+            slot.addEventListener('touchend', (e) => this.handleTouchEnd(e, r, c));
+
+            boardElem.appendChild(slot);
+          }
+        }
+      },
+
+      handleTileClick(r, c) {
+        if (this.isProcessing) return;
+        AudioEngine.init();
+
+        if (!this.selectedTile) {
+          this.selectedTile = { r, c };
+          this.renderBoard();
+        } else {
+          if (this.selectedTile.r === r && this.selectedTile.c === c) {
+            this.selectedTile = null;
+            this.renderBoard();
+          } else if (this.isAdjacent(this.selectedTile, { r, c })) {
+            this.attemptSwap(this.selectedTile, { r, c });
+            this.selectedTile = null;
+          } else {
+            this.selectedTile = { r, c };
+            this.renderBoard();
+          }
+        }
+      },
+
+      handleTouchStart(e, r, c) {
+        if (this.isProcessing) return;
+        const touch = e.touches[0];
+        this.touchStartX = touch.clientX;
+        this.touchStartY = touch.clientY;
+        this.touchTile = { r, c };
+      },
+
+      handleTouchEnd(e, r, c) {
+        if (this.isProcessing || !this.touchTile) return;
+        const touch = e.changedTouches[0];
+        const diffX = touch.clientX - this.touchStartX;
+        const diffY = touch.clientY - this.touchStartY;
+        const threshold = 18;
+
+        if (Math.abs(diffX) > threshold || Math.abs(diffY) > threshold) {
+          let targetR = r;
+          let targetC = c;
+
+          if (Math.abs(diffX) > Math.abs(diffY)) {
+            targetC += diffX > 0 ? 1 : -1;
+          } else {
+            targetR += diffY > 0 ? 1 : -1;
+          }
+
+          if (targetR >= 0 && targetR < BOARD_SIZE && targetC >= 0 && targetC < BOARD_SIZE) {
+            this.attemptSwap({ r, c }, { r: targetR, c: targetC });
+          }
+        }
+        this.touchTile = null;
+      },
+
+      isAdjacent(t1, t2) {
+        const dr = Math.abs(t1.r - t2.r);
+        const dc = Math.abs(t1.c - t2.c);
+        return (dr === 1 && dc === 0) || (dr === 0 && dc === 1);
+      },
+
+      async attemptSwap(t1, t2) {
+        this.isProcessing = true;
+        AudioEngine.play('swap');
+
+        this.swapDesserts(t1, t2);
+        this.renderBoard();
+
+        const matchData = this.checkMatches();
+
+        if (!matchData.hasMatches) {
+          await this.sleep(200);
+          this.swapDesserts(t1, t2);
+          this.renderBoard();
+          this.isProcessing = false;
+        } else {
+          this.movesLeft--;
+          this.comboMultiplier = 1;
+          this.updateUI();
+          await this.processMatchesAndCascades();
+        }
+      },
+
+      swapDesserts(t1, t2) {
+        const temp = this.board[t1.r][t1.c];
+        this.board[t1.r][t1.c] = this.board[t2.r][t2.c];
+        this.board[t2.r][t2.c] = temp;
+      },
+
+      checkMatches() {
+        const matchedSet = new Set();
+        const matchGroups = [];
+
+        // Horizontal Matches
+        for (let r = 0; r < BOARD_SIZE; r++) {
+          let matchLength = 1;
+          for (let c = 0; c < BOARD_SIZE; c++) {
+            const next = c < BOARD_SIZE - 1;
+            if (next && this.board[r][c] && this.board[r][c+1] && this.board[r][c].id === this.board[r][c+1].id) {
+              matchLength++;
+            } else {
+              if (matchLength >= 3) {
+                const group = [];
+                for (let i = 0; i < matchLength; i++) {
+                  const col = c - i;
+                  matchedSet.add(`${r},${col}`);
+                  group.push({ r, c: col });
+                }
+                matchGroups.push({ dir: 'h', length: matchLength, tiles: group, id: this.board[r][c].id });
+              }
+              matchLength = 1;
+            }
+          }
+        }
+
+        // Vertical Matches
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          let matchLength = 1;
+          for (let r = 0; r < BOARD_SIZE; r++) {
+            const next = r < BOARD_SIZE - 1;
+            if (next && this.board[r][c] && this.board[r+1][c] && this.board[r][c].id === this.board[r+1][c].id) {
+              matchLength++;
+            } else {
+              if (matchLength >= 3) {
+                const group = [];
+                for (let i = 0; i < matchLength; i++) {
+                  const row = r - i;
+                  matchedSet.add(`${row},${c}`);
+                  group.push({ r: row, c });
+                }
+                matchGroups.push({ dir: 'v', length: matchLength, tiles: group, id: this.board[r][c].id });
+              }
+              matchLength = 1;
+            }
+          }
+        }
+
+        return { hasMatches: matchedSet.size > 0, matchedSet, matchGroups };
+      },
+
+      async processMatchesAndCascades() {
+        let matchData = this.checkMatches();
+
+        while (matchData.hasMatches) {
+          AudioEngine.play('pop', this.comboMultiplier);
+
+          if (this.comboMultiplier === 2) this.showComboBanner("SWEET!");
+          if (this.comboMultiplier === 3) this.showComboBanner("DELICIOUS!");
+          if (this.comboMultiplier >= 4) this.showComboBanner("DELIGHTFUL!");
+
+          const pointsPerTile = 20 * this.comboMultiplier;
+          let totalGained = matchData.matchedSet.size * pointsPerTile;
+          this.score += totalGained;
+          this.updateUI();
+
+          matchData.matchedSet.forEach(key => {
+            const [r, c] = key.split(',').map(Number);
+            this.triggerPop(r, c);
+            this.spawnSprinkles(r, c);
+            this.showFloatingScore(r, c, pointsPerTile);
+            this.board[r][c] = null;
+          });
+
+          await this.sleep(220);
+
+          this.applyGravity();
+          this.renderBoard();
+          await this.sleep(150);
+
+          this.refillBoard();
+          this.renderBoard();
+          await this.sleep(200);
+
+          this.comboMultiplier++;
+          matchData = this.checkMatches();
+        }
+
+        this.checkGameStatus();
+
+        if (!this.hasValidMoves()) {
+          await this.shuffleBoard();
+        }
+
+        this.isProcessing = false;
+      },
+
+      triggerPop(r, c) {
+        const tile = document.querySelector(`[data-row="${r}"][data-col="${c}"] .dessert-item`);
+        if (tile) tile.classList.add('tile-pop');
+      },
+
+      spawnSprinkles(r, c) {
+        const slot = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+        if (!slot) return;
+
+        const colors = ['#f43f5e', '#ec4899', '#38bdf8', '#facc15', '#4ade80'];
+        for (let i = 0; i < 5; i++) {
+          const p = document.createElement('div');
+          p.className = 'particle';
+          const size = Math.random() * 5 + 3;
+          p.style.width = `${size}px`;
+          p.style.height = `${size}px`;
+          p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+          p.style.left = '50%';
+          p.style.top = '50%';
+
+          const angle = Math.random() * Math.PI * 2;
+          const dist = Math.random() * 24 + 8;
+          p.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+          p.style.setProperty('--dy', `${Math.sin(angle) * dist}px`);
+
+          slot.appendChild(p);
+          setTimeout(() => p.remove(), 500);
+        }
+      },
+
+      showFloatingScore(r, c, pts) {
+        const tile = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+        if (!tile) return;
+        const pop = document.createElement('div');
+        pop.className = 'score-float text-xs sm:text-sm';
+        pop.innerText = `+${pts}`;
+        tile.appendChild(pop);
+        setTimeout(() => pop.remove(), 750);
+      },
+
+      showComboBanner(text) {
+        const boardContainer = document.getElementById('game-board');
+        const banner = document.createElement('div');
+        banner.className = 'combo-banner text-lg sm:text-xl font-bold';
+        banner.innerText = text;
+        banner.style.left = '25%';
+        banner.style.top = '40%';
+        boardContainer.appendChild(banner);
+        setTimeout(() => banner.remove(), 850);
+      },
+
+      applyGravity() {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+          let emptySpot = BOARD_SIZE - 1;
+          for (let r = BOARD_SIZE - 1; r >= 0; r--) {
+            if (this.board[r][c] !== null) {
+              if (r !== emptySpot) {
+                this.board[emptySpot][c] = this.board[r][c];
+                this.board[r][c] = null;
+              }
+              emptySpot--;
+            }
+          }
+        }
+      },
+
+      refillBoard() {
+        for (let r = 0; r < BOARD_SIZE; r++) {
+          for (let c = 0; c < BOARD_SIZE; c++) {
+            if (this.board[r][c] === null) {
+              this.board[r][c] = this.getRandomDessert();
+            }
+          }
+        }
+      },
+
+      hasValidMoves() {
+        for (let r = 0; r < BOARD_SIZE; r++) {
+          for (let c = 0; c < BOARD_SIZE; c++) {
+            if (c < BOARD_SIZE - 1) {
+              this.swapDesserts({ r, c }, { r, c: c + 1 });
+              const match = this.checkMatches();
+              this.swapDesserts({ r, c }, { r, c: c + 1 });
+              if (match.hasMatches) return true;
+            }
+            if (r < BOARD_SIZE - 1) {
+              this.swapDesserts({ r, c }, { r: r + 1, c });
+              const match = this.checkMatches();
+              this.swapDesserts({ r, c }, { r: r + 1, c });
+              if (match.hasMatches) return true;
+            }
+          }
+        }
+        return false;
+      },
+
+      async shuffleBoard() {
+        const overlay = document.getElementById('board-overlay');
+        overlay.classList.remove('hidden');
+
+        await this.sleep(800);
+        do {
+          this.generateBoard();
+        } while (this.checkMatches().hasMatches || !this.hasValidMoves());
+
+        this.renderBoard();
+        overlay.classList.add('hidden');
+      },
+
+      useBooster() {
+        if (this.boostersLeft <= 0 || this.isProcessing) return;
+        this.boostersLeft--;
+        document.getElementById('booster-count').innerText = this.boostersLeft;
+
+        // Clear 3 random items magic effect
+        for (let i = 0; i < 3; i++) {
+          const rx = Math.floor(Math.random() * BOARD_SIZE);
+          const ry = Math.floor(Math.random() * BOARD_SIZE);
+          this.triggerPop(rx, ry);
+          this.spawnSprinkles(rx, ry);
+          this.board[rx][ry] = null;
+        }
+        this.score += 150;
+        this.updateUI();
+        this.processMatchesAndCascades();
+      },
+
+      updateUI() {
+        document.getElementById('score-val').innerText = this.score;
+        document.getElementById('moves-val').innerText = this.movesLeft;
+        document.getElementById('target-text').innerText = `${this.score} / ${this.targetScore}`;
+
+        const progress = Math.min(100, (this.score / this.targetScore) * 100);
+        document.getElementById('target-bar').style.width = `${progress}%`;
+        document.getElementById('bottom-target-bar').style.width = `${progress}%`;
+      },
+
+      checkGameStatus() {
+        if (this.score >= this.targetScore) {
+          AudioEngine.play('win');
+          this.showModal(true);
+        } else if (this.movesLeft <= 0) {
+          AudioEngine.play('lose');
+          this.showModal(false);
+        }
+      },
+
+      showModal(isWin) {
+        const modal = document.getElementById('game-modal');
+        const icon = document.getElementById('modal-icon');
+        const title = document.getElementById('modal-title');
+        const desc = document.getElementById('modal-desc');
+        const btn = document.getElementById('modal-btn');
+
+        document.getElementById('modal-score').innerText = this.score;
+        document.getElementById('modal-target').innerText = this.targetScore;
+
+        if (isWin) {
+          icon.innerHTML = '🍨';
+          title.innerText = 'ผ่านด่านแล้ว!';
+          desc.innerText = 'เก่งมาก! คุณจับคู่ขนมหวานครบตามเป้าหมายแล้ว!';
+          btn.innerText = 'ด่านต่อไป 🚀';
+        } else {
+          icon.innerHTML = '💔';
+          title.innerText = 'จำนวน Move หมดแล้ว!';
+          desc.innerText = 'อีกนิดเดียวเท่านั้น! ลองเล่นใหม่อีกครั้งนะ!';
+          btn.innerText = 'ลองใหม่ 🔄';
+        }
+
+        modal.classList.remove('hidden');
+      },
+
+      nextLevelOrRetry() {
+        document.getElementById('game-modal').classList.add('hidden');
+        if (this.score >= this.targetScore) {
+          this.level++;
+        }
+        this.init();
+      },
+
+      openSettings() {
+        document.getElementById('settings-modal').classList.remove('hidden');
+      },
+
+      closeSettings() {
+        document.getElementById('settings-modal').classList.add('hidden');
+      },
+
+      openMenu() {
+        this.openSettings();
+      },
+
+      restartGame() {
+        this.closeSettings();
+        this.init();
+      },
+
+      toggleSound() {
+        AudioEngine.enabled = !AudioEngine.enabled;
+        const icon = document.getElementById('sound-icon');
+        if (AudioEngine.enabled) {
+          icon.className = 'fa-solid fa-volume-high text-pink-500 text-lg';
+        } else {
+          icon.className = 'fa-solid fa-volume-xmark text-pink-300 text-lg';
+        }
+      },
+
+      sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+    };
+
+    window.onload = function() {
+      GameApp.init();
+    };
+  </script>
+</body>
+</html>
