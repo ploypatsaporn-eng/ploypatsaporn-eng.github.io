@@ -1,0 +1,12 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Dessert Match",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "Dessert Match",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "description": "A fun puzzle matching game"
+}
